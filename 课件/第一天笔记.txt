@@ -1,0 +1,65 @@
+削峰填谷 -> 缓冲
+
+
+
+dependencyManagement 
+ 用户子模块 声明版本号 
+ 
+ 
+ 1 settings 里 version control  ->  git  -> 选择 git /bin/git.exe
+ 2 测试登陆一下github
+ 
+ git add 
+ git commit 
+ git push 
+ 
+红色文件  ：  未上传过的文件
+绿色文件  ：  存放到暂存区的文件
+黑色文件  ： 已经上传到本地库 
+蓝色文件  ：  上传过本地库或远端的文件 ，又进行了修改
+
+
+
+http://logserver/log?logString={json}
+
+log4j  
+
+利用lombok 把java代码简化成为注解
+
+日志级别
+
+info warn error debug trace fatal
+
+
+trace   debug info warn error    fatal
+
+注意 ： 如果log.info 飘红线
+要在idea中安装 lombok插件
+
+注意： 替换 logging 为log4j
+
+
+<packaging > pom</packaging>   
+pom 只打包为pom.xml
+jar 打包为jar
+war 打包为war 
+
+
+kafkaTemplate 下红线 ， idea误报
+在settings 中 inspection 中关闭springcore的autowired 检测
+
+test   报错
+高版本2.2.2   后 改为1.5.10 时  2.2.2生成的测试代码与1.5.10的依赖不兼容
+
+
+ 非root账号不允许使用1024以下的端口号
+ 
+ nginx 
+ openResty
+ 
+ 
+
+
+
+
+

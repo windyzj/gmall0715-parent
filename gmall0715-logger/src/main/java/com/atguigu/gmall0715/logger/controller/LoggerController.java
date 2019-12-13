@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.atguigu.gmall0715.common.constant.GmallConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 @RestController  // controller+responsebody
 @Slf4j
 public class LoggerController {
+
+    @Value("")
+    String config123;
 
     @Autowired
     KafkaTemplate<String,String> kafkaTemplate;
