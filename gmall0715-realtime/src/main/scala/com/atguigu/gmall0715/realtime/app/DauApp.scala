@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSON
 import com.atguigu.gmall0715.common.constant.GmallConstant
 import com.atguigu.gmall0715.realtime.bean.StartupLog
 import com.atguigu.gmall0715.realtime.util.{MyKafkaUtil, RedisUtil}
+import org.apache.hadoop.conf.Configuration
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.SparkConf
 import org.apache.spark.broadcast.Broadcast
@@ -15,10 +16,9 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 import redis.clients.jedis.Jedis
+import org.apache.phoenix.spark._
 
 object DauApp {
-
-
 
 //  1  消费kafka 的数据
 //  2  json字符串 -> 转换为一个对象 case class
@@ -52,6 +52,16 @@ object DauApp {
   }
 
   //3  利用广播变量 把清单发给各个executor  各个executor  根据清单进行比对 进行过滤
+//  startUpDstream.transform(rdd=>
+//
+//      rdd.mapPartition(itr=>
+//          //redis set
+//          //set itr 比对
+//          //
+//
+//      )
+//  )
+ //driver
 
   val filteredDstream: DStream[StartupLog] = startUpDstream.transform { rdd =>
     //driver  周期性执行
@@ -74,16 +84,12 @@ object DauApp {
 
 
   //本批次 自检去重
-  // 相同的mid 保留第一条
+  // 相同的mid 进行分组 ，每组进行排序 ，取第一条
   val groupbyMidDStream: DStream[(String, Iterable[StartupLog])] = filteredDstream.map(startuplog=>(startuplog.mid,startuplog)).groupByKey()
   val filteredSefDstream: DStream[StartupLog] = groupbyMidDStream.map { case (mid, startupLogItr) =>
     val top1list: List[StartupLog] = startupLogItr.toList.sortWith((startupLog1, startupLog2) => startupLog1.ts < startupLog2.ts).take(1)
     top1list(0)
   }
-
-
-
-
 
 
 
@@ -98,7 +104,7 @@ object DauApp {
 //  }
 
 
-
+  filteredSefDstream.cache()
 
 
 //  4  把过滤后的新数据进行写入 redis  ( 当日用户访问的清单)
@@ -113,6 +119,7 @@ object DauApp {
            val dauKey: String = "dau:"+ startup.logDate
           println(startup)
           jedis.sadd(dauKey,startup.mid)
+          jedis.expire(dauKey,2*24*3600)
       }
       jedis.close()
 
@@ -123,8 +130,14 @@ object DauApp {
 
   //保存hbase
 
-      ssc.start()
-      ssc.awaitTermination()
+  filteredSefDstream.foreachRDD{rdd=>
+
+    rdd.saveToPhoenix("GMALL0715_DAU",Seq("MID", "UID", "APPID", "AREA", "OS", "CH", "TYPE", "VS", "LOGDATE", "LOGHOUR", "TS"),new Configuration,Some("hadoop1,hadoop2,hadoop3:2181"))
+
+  }
+
+    ssc.start()
+     ssc.awaitTermination()
 
   }
 
