@@ -3,15 +3,15 @@ package com.atguigu.gmall0715.publisher.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.atguigu.gmall0715.publisher.service.PublisherService;
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @RestController
 public class PublisherController {
@@ -43,5 +43,36 @@ public class PublisherController {
         return JSON.toJSONString(totalList);
     }
 
+    @GetMapping("realtime-hour")
+    public String getRealtimeHour(@RequestParam("id") String id ,@RequestParam("date") String date){
+       if("dau".equals(id)) {
+           Map dauCountHourMapTD = publisherService.getDauCountHour(date);
+           String yd = getYd(date);
+           Map dauCountHourMapYD = publisherService.getDauCountHour(yd);
+
+           Map<String,Map> resultMap=new HashMap<>();
+           resultMap.put("yesterday",dauCountHourMapYD);
+           resultMap.put("today",dauCountHourMapTD);
+           return   JSON.toJSONString(resultMap) ;
+       }else{
+           return null;
+       }
+
+    }
+
+
+    private String  getYd(String td){
+        String yd=null;
+        SimpleDateFormat formator = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            Date tdDate = formator.parse(td);
+            Date ydDate = DateUtils.addDays(tdDate, -1);
+            yd=formator.format(ydDate);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return yd;
+    }
 
 }
