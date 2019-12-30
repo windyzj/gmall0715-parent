@@ -12,6 +12,7 @@
         <module>gmall0715-mock</module>
         <module>gmall0715-logger</module>
         <module>gmall0715-realtime</module>
+        <module>gmall0715-canal</module>
     </modules>
     <packaging>pom</packaging>
 
