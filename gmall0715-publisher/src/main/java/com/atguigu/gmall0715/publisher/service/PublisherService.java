@@ -4,11 +4,14 @@ import java.util.Map;
 
 public interface PublisherService {
 
-    public   Long getDauCount(String date);
+    public Long getDauCount(String date);
 
     public Map getDauCountHour(String date);
 
-    public   Double getOrderAmount(String date);
+    public Double getOrderAmount(String date);
 
     public Map getOrderAmountHour (String date);
+
+    public Map getSaleDetail(String date ,String keyword,int pageNo, int pagesize);
+
 }

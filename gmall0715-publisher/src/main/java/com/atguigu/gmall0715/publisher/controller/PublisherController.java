@@ -2,6 +2,8 @@ package com.atguigu.gmall0715.publisher.controller;
 
 
 import com.alibaba.fastjson.JSON;
+import com.atguigu.gmall0715.publisher.bean.Option;
+import com.atguigu.gmall0715.publisher.bean.Stat;
 import com.atguigu.gmall0715.publisher.service.PublisherService;
 import org.apache.commons.lang.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,5 +97,73 @@ public class PublisherController {
 
         return yd;
     }
+
+
+
+    @GetMapping("sale_detail")
+    public String  getSaleDetail(@RequestParam("date") String date ,@RequestParam("startpage") int pageNo,
+                                 @RequestParam("size") int size, @RequestParam("keyword") String keyword ){
+
+        Map saleDetailMap = publisherService.getSaleDetail(date, keyword, pageNo, size);
+        Long total =(Long)saleDetailMap.get("total");
+        List detail =(List) saleDetailMap.get("detail");
+
+        Map ageMap = (Map)saleDetailMap.get("ageAgg");
+
+
+        Long age_20ct=0L;
+        Long age20_30ct=0L;
+        Long age30_ct=0L;
+
+        for (Object o : ageMap.entrySet()) {
+            Map.Entry entry = (Map.Entry) o;
+            String ageKey =(String) entry.getKey();
+            Long ageCount =(Long)entry.getValue();
+            Integer age = Integer.valueOf(ageKey);
+
+            if(age<20){
+                age_20ct+=ageCount;
+            }else if(age>=20 &&age<30){
+                age20_30ct+=ageCount;
+            }else {
+                age30_ct+=ageCount;
+            }
+        }
+
+        Double age_20ratio = Math.round(age_20ct * 1000D / total) / 10D;
+        Double age20_30ratio = Math.round(age20_30ct * 1000D / total) / 10D;
+        Double age30_ratio = Math.round(age30_ct * 1000D / total) / 10D;
+
+
+        List<Stat>  statList=new ArrayList<>();
+
+        List<Option>  ageOptionList=new ArrayList<>();
+        ageOptionList.add(new Option("20岁以下",age_20ratio));
+        ageOptionList.add(new Option("20岁到30岁",age20_30ratio));
+        ageOptionList.add(new Option("30岁及以上",age30_ratio));
+        statList.add(new Stat("用户年龄占比",ageOptionList)) ;
+
+        Map genderMap = (Map)saleDetailMap.get("genderAgg");
+
+        Long femaleCount = (Long)genderMap.get("F");
+        Long  maleCount = (Long)genderMap.get("M");
+        Double femaleRatio = Math.round(femaleCount * 1000D / total) / 10D;
+        Double maleRatio = Math.round(maleCount * 1000D / total) / 10D;
+
+        List<Option>  genderOptionList=new ArrayList<>();
+        genderOptionList.add(new Option("男",maleRatio));
+        genderOptionList.add(new Option("女",femaleRatio));
+        statList.add(new Stat("用户性别占比",genderOptionList)) ;
+
+
+        Map result =new HashMap();
+        result.put("stat",statList);
+        result.put("detail",detail);
+        result.put("total",total);
+
+        return JSON.toJSONString(result)     ;
+
+    }
+
 
 }

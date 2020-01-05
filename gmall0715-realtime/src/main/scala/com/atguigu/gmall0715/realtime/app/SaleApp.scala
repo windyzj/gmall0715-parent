@@ -6,7 +6,7 @@ import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.serializer.SerializeConfig
 import com.atguigu.gmall0715.common.constant.GmallConstant
 import com.atguigu.gmall0715.realtime.bean.{OrderDetail, OrderInfo, SaleDetail, UserInfo}
-import com.atguigu.gmall0715.realtime.util.{MyKafkaUtil, RedisUtil}
+import com.atguigu.gmall0715.realtime.util.{MyEsUtil, MyKafkaUtil, RedisUtil}
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.{Seconds, StreamingContext}
@@ -126,7 +126,17 @@ object SaleApp {
     }
 
 
-    saleDetaiWithUserDstream.print(100)
+  //  saleDetaiWithUserDstream.print(100)
+
+    //保存商品销售信息明细
+    saleDetaiWithUserDstream.foreachRDD{rdd=>
+      rdd.foreachPartition{saleDetailItr=>
+        val saleDetailList: List[(String, SaleDetail)] = saleDetailItr.map(saledetail=>(saledetail.order_detail_id,saledetail)).toList
+        MyEsUtil.insertEsBulk(GmallConstant.ES_INDEX_SALE,saleDetailList)
+
+      }
+    }
+
 
 
     val inputUserDstream: InputDStream[ConsumerRecord[String, String]] = MyKafkaUtil.getKafkaStream(GmallConstant.KAFKA_TOPIC_USER,ssc)

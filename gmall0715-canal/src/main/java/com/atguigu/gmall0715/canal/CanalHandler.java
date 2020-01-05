@@ -42,7 +42,7 @@ public class CanalHandler {
 
             KafkaSender.send(topic,jsonObject.toJSONString());
             try {
-                Thread.sleep(1500);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

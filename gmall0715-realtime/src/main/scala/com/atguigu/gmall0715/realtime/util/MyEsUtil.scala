@@ -42,25 +42,29 @@ object MyEsUtil {
   private def build(): Unit = {
     factory = new JestClientFactory
     factory.setHttpClientConfig(new HttpClientConfig.Builder(ES_HOST + ":" + ES_HTTP_PORT).multiThreaded(true)
-      .maxTotalConnection(20) //连接总数
+      .maxTotalConnection(3) //连接总数
       .connTimeout(10000).readTimeout(10000).build)
 
   }
 
   def insertEsBulk(indexName:String, sourceList: List[(String,Any)] ): Unit ={
-    val jest: JestClient = getClient
+    if(sourceList.size>0){
+      val jest: JestClient = getClient
 
-    val bulkBuilder = new Bulk.Builder
-    for ((id,source) <- sourceList ) {
-       val index: Index = new Index.Builder(source).index(indexName).`type`("_doc").id(id).build()
-        bulkBuilder.addAction(index)
+      val bulkBuilder = new Bulk.Builder
+      for ((id,source) <- sourceList ) {
+         val index: Index = new Index.Builder(source).index(indexName).`type`("_doc").id(id).build()
+          bulkBuilder.addAction(index)
+      }
+
+       val items: util.List[BulkResult#BulkResultItem] = jest.execute(bulkBuilder.build()).getItems
+        //一次批量提交es
+      println(items.size())
+
+     // println(  "已保存："+items.size()+"条数据")
+
+      close(jest)
     }
-
-    val items: util.List[BulkResult#BulkResultItem] = jest.execute(bulkBuilder.build()).getItems
-      //一次批量提交es
-    println(  "已保存："+items.size()+"条数据")
-
-    close(jest)
   }
 
 
