@@ -23,6 +23,10 @@ public class CanalHandler {
     public void  handle(){
         if(tableName.equals("order_info")&&eventType== CanalEntry.EventType.INSERT&&rowDataList.size()>0) {// 下单
             sendToKafka(GmallConstant.KAFKA_TOPIC_ORDER);
+        }else if(tableName.equals("order_detail")&&eventType== CanalEntry.EventType.INSERT&&rowDataList.size()>0){ // 用户 商品 订单明细
+            sendToKafka(GmallConstant.KAFKA_TOPIC_ORDER_DETAIL);
+        }else if(tableName.equals("user_info")&&(eventType== CanalEntry.EventType.INSERT||eventType== CanalEntry.EventType.UPDATE)&&rowDataList.size()>0){ // 用户 商品 订单明细
+            sendToKafka(GmallConstant.KAFKA_TOPIC_USER);
         }
     }
 
@@ -32,9 +36,16 @@ public class CanalHandler {
             JSONObject jsonObject = new JSONObject();
             for (CanalEntry.Column column : afterColumnsList) {
                 System.out.println(column.getName()+"---->"+ column.getValue());
+
                 jsonObject.put(column.getName(),column.getValue());
             }
+
             KafkaSender.send(topic,jsonObject.toJSONString());
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

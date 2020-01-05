@@ -24,7 +24,7 @@ object AlertApp {
 
     val inputDstream: InputDStream[ConsumerRecord[String, String]] = MyKafkaUtil.getKafkaStream(GmallConstant.KAFKA_TOPIC_EVENT,ssc)
 
-
+    inputDstream.repartition(4)
     val eventInfoDstream: DStream[EventInfo] = inputDstream.map { record =>
       val jsonString: String = record.value()
       val eventInfo: EventInfo = JSON.parseObject(jsonString, classOf[EventInfo])
@@ -45,13 +45,15 @@ object AlertApp {
 //    5 整理成要保存预警的格式
 
     //5分钟内  开窗口  window (窗口大小 （5分钟）， 滑动步长(10秒) )
-    eventInfoDstream.cache()
+
+
     val eventWindowDstream: DStream[EventInfo] = eventInfoDstream.window(Seconds(300),Seconds(5))
-    eventWindowDstream.cache()
+
+
 
     // 分组 按照mid
-    val eventInfoGroupMidDStream: DStream[(String, Iterable[EventInfo])] = eventWindowDstream.map(eventInfo=>(eventInfo.mid,eventInfo)).groupByKey()
-    eventInfoGroupMidDStream.cache()
+   val eventInfoGroupMidDStream: DStream[(String, Iterable[EventInfo])] = eventWindowDstream.map(eventInfo=>(eventInfo.mid,eventInfo)).groupByKey(4)
+
     val alertInfoDstream: DStream[(Boolean, CouponAlertInfo)] = eventInfoGroupMidDStream.map { case (mid, eventInfoItr) =>
       //业务判断
       //找出所有领取优惠券是登录的uid
@@ -80,6 +82,8 @@ object AlertApp {
       }
       (ifAlert, CouponAlertInfo(mid, uidSet, itemSet, eventList, System.currentTimeMillis()))
     }
+    alertInfoDstream.repartition(10)
+    alertInfoDstream.print()
 
     val filteredDstream: DStream[(Boolean, CouponAlertInfo)] = alertInfoDstream.filter(_._1)
 
